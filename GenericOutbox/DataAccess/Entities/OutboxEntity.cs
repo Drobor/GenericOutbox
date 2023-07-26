@@ -15,6 +15,7 @@ public class OutboxEntity
     public OutboxRecordStatus Status { get; set; }
     public DateTime? RetryTimeoutUtc { get; set; }
     public int RetriesCount { get; set; }
+    public DateTime CreatedUtc { get; set; }
     public DateTime LastUpdatedUtc { get; set; }
     public string Version { get; set; }
 

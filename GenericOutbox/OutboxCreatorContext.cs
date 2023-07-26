@@ -56,6 +56,8 @@ class OutboxCreatorContext<TDbContext> : IOutboxCreatorContext where TDbContext 
 
     private OutboxEntity CreateOutboxRecordInternal<T>(string action, T model)
     {
+        var utcNow = DateTime.UtcNow;
+
         var newRecord = new OutboxEntity
         {
             Action = action,
@@ -64,7 +66,8 @@ class OutboxCreatorContext<TDbContext> : IOutboxCreatorContext where TDbContext 
             ParentId = _previousStepId,
             Version = _outboxOptions.Version,
             Lock = _lock,
-            LastUpdatedUtc = DateTime.UtcNow,
+            LastUpdatedUtc = utcNow,
+            CreatedUtc = utcNow
         };
 
         _dbContext.Set<OutboxEntity>().Add(newRecord);

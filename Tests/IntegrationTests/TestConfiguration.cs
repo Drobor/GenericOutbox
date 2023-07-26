@@ -21,9 +21,11 @@ public static class TestConfiguration
             {
                 Version = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             },
-            x => x.Add<IOutboxedKeyStorageService>());
+            x => x.Add<IOutboxedKeyStorageService>()
+                .Add<IOutboxedOutboxTestHelperService>());
 
         services.AddScoped<IKeyStorageService, KeyStorageService>();
+        services.AddScoped<IOutboxTestHelperService, OutboxTestHelperService>();
         services.AddLogging();
 
         TestServiceProvider = services.BuildServiceProvider();

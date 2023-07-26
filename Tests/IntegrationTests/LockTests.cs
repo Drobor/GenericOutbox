@@ -159,6 +159,7 @@ public class LockTests : DependencyInjectionTestBase
     {
         using var scope = this.ServiceProvider.CreateScope();
         var outboxedKeyStorageService = scope.ServiceProvider.GetRequiredService<IOutboxedKeyStorageService>();
+        var outboxTestHelper = scope.ServiceProvider.GetRequiredService<IOutboxedOutboxTestHelperService>();
         var outboxCreatorContext = scope.ServiceProvider.GetRequiredService<IOutboxCreatorContext>();
 
         using var outboxLock = outboxCreatorContext.Lock(lockId);
@@ -172,7 +173,7 @@ public class LockTests : DependencyInjectionTestBase
             result.Enqueue(keyName);
         }
 
-        outboxedKeyStorageService.ThrowException();
+        outboxTestHelper.ThrowException();
 
         for (var i = 0; i < countAfterFail; i++)
         {

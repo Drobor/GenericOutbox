@@ -51,6 +51,9 @@ namespace IntegrationTests.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid?>("HandlerLock")
                         .HasColumnType("TEXT");
 

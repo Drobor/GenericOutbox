@@ -11,5 +11,4 @@ public interface IKeyStorageService
 {
     bool Add(string key);
     bool Contains(string key);
-    void ThrowException();
 }

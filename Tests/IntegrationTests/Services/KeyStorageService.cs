@@ -11,7 +11,4 @@ public class KeyStorageService : IKeyStorageService
 
     public bool Contains(string key)
         => s_storageDictionary.ContainsKey(key);
-
-    public void ThrowException()
-        => throw new Exception();
 }
