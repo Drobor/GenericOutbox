@@ -81,7 +81,7 @@ public class OutboxDispatcherHostedService : IHostedService
                     }
                 }
 
-                await Task.Delay(100, _cancellationToken);
+                await Task.Delay(_outboxOptions.DispatcherDbPollingDelayMs, _cancellationToken);
             }
         }
         finally
