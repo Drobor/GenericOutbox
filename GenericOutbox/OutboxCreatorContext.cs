@@ -64,6 +64,7 @@ class OutboxCreatorContext<TDbContext> : IOutboxCreatorContext where TDbContext 
             ParentId = _previousStepId,
             Version = _outboxOptions.Version,
             Lock = _lock,
+            LastUpdatedUtc = DateTime.UtcNow,
         };
 
         _dbContext.Set<OutboxEntity>().Add(newRecord);

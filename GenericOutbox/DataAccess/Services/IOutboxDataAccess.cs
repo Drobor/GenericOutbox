@@ -6,6 +6,6 @@ public interface IOutboxDataAccess
 {
     Task FailRecord(OutboxEntity outboxEntity);
     Task SendRecordToRetry(OutboxEntity outboxEntity, TimeSpan retryInterval);
-    Task<OutboxEntity[]> GetOutboxRecords(int count);
+    Task<OutboxEntity[]> GetOutboxRecords(int maxCount);
     Task CompleteRecord(OutboxEntity outboxEntity);
 }
