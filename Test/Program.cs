@@ -17,7 +17,7 @@ class Program
         ConfigureServices(services);
 
         var host = CreateHostBuilder(args).Build();
-        _ = Task.Run(async () => await host.RunAsync());
+        var runTask = Task.Run(async () => await host.RunAsync());
 
         var rootSp = host.Services;
 
@@ -34,7 +34,7 @@ class Program
             await qwe.WithoutReturnType(new Point(1, 2), new[] { 1, 2, 34 });
         }
 
-        Console.ReadLine();
+        await runTask;
     }
 
     static void ConfigureServices(IServiceCollection services)

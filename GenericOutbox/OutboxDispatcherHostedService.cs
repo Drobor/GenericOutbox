@@ -84,6 +84,9 @@ public class OutboxDispatcherHostedService : IHostedService
                 await Task.Delay(_outboxOptions.DispatcherDbPollingDelayMs, _cancellationToken);
             }
         }
+        catch (TaskCanceledException)
+        {
+        }
         finally
         {
             _recordsChannel.Writer.Complete();
@@ -92,46 +95,52 @@ public class OutboxDispatcherHostedService : IHostedService
 
     private async Task HandlerLoop()
     {
-        await foreach (var outboxRecord in _recordsChannel.Reader.ReadAllAsync(_cancellationToken))
+        try
         {
-            Interlocked.Decrement(ref _waitingHandlersCount);
-
-            IOutboxActionHandler? handler = null;
-
-            using var scope = _serviceProvider.CreateScope();
-            var outboxDataAccess = scope.ServiceProvider.GetRequiredService<IOutboxDataAccess>();
-            var outboxHandlerContext = scope.ServiceProvider.GetRequiredService<IOutboxHandlerContext>();
-
-            try
+            await foreach (var outboxRecord in _recordsChannel.Reader.ReadAllAsync(_cancellationToken))
             {
-                outboxHandlerContext.ScopeId = outboxRecord.ScopeId;
-                handler = _outboxActionHandlerFactory.TryGet(scope.ServiceProvider, outboxRecord.Action);
+                Interlocked.Decrement(ref _waitingHandlersCount);
 
-                if (handler == null)
-                    throw new OutboxHandlerNotFoundException($"Handler for action {outboxRecord.Action} not found");
+                IOutboxActionHandler? handler = null;
 
-                await handler.Handle(outboxRecord);
+                using var scope = _serviceProvider.CreateScope();
+                var outboxDataAccess = scope.ServiceProvider.GetRequiredService<IOutboxDataAccess>();
+                var outboxHandlerContext = scope.ServiceProvider.GetRequiredService<IOutboxHandlerContext>();
 
-                await outboxDataAccess.CompleteRecord(outboxRecord);
-            }
-            catch (Exception ex)
-            {
-                var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
-                var shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
-
-                if (shouldRetry.HasValue)
+                try
                 {
-                    await outboxDataAccess.SendRecordToRetry(outboxRecord, shouldRetry.Value);
+                    outboxHandlerContext.ScopeId = outboxRecord.ScopeId;
+                    handler = _outboxActionHandlerFactory.TryGet(scope.ServiceProvider, outboxRecord.Action);
+
+                    if (handler == null)
+                        throw new OutboxHandlerNotFoundException($"Handler for action {outboxRecord.Action} not found");
+
+                    await handler.Handle(outboxRecord);
+
+                    await outboxDataAccess.CompleteRecord(outboxRecord);
                 }
-                else
+                catch (Exception ex)
                 {
-                    await outboxDataAccess.FailRecord(outboxRecord);
+                    var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
+                    var shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
+
+                    if (shouldRetry.HasValue)
+                    {
+                        await outboxDataAccess.SendRecordToRetry(outboxRecord, shouldRetry.Value);
+                    }
+                    else
+                    {
+                        await outboxDataAccess.FailRecord(outboxRecord);
+                    }
+                }
+                finally
+                {
+                    Interlocked.Increment(ref _waitingHandlersCount);
                 }
             }
-            finally
-            {
-                Interlocked.Increment(ref _waitingHandlersCount);
-            }
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 }
