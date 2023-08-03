@@ -1,4 +1,4 @@
-namespace ManagementUi.Shared
+namespace GenericOutbox.ManagementUi.Shared
 {
     public class WeatherForecast
     {

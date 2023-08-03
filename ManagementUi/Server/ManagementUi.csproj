@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net7.0</TargetFramework>
@@ -15,8 +15,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Client\ManagementUi.Client.csproj"/>
-        <ProjectReference Include="..\Shared\ManagementUi.Shared.csproj"/>
+        <ProjectReference Include="..\Client\GenericOutbox.GenericOutbox.ManagementUi.Client.csproj"/>
+        <ProjectReference Include="..\Shared\GenericOutbox.GenericOutbox.ManagementUi.Shared.csproj"/>
     </ItemGroup>
 
 </Project>

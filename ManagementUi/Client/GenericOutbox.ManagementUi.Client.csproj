@@ -4,6 +4,7 @@
     <TargetFramework>net7.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <StaticWebAssetBasePath>Outbox</StaticWebAssetBasePath>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,7 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Shared\ManagementUi.Shared.csproj" />
+    <ProjectReference Include="..\Shared\GenericOutbox.ManagementUi.Shared.csproj" />
   </ItemGroup>
 
 </Project>

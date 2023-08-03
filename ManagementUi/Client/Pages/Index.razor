@@ -1,9 +1,49 @@
 ﻿@page "/"
+@using GenericOutbox.ManagementUi.Client.ApiModels
+@inject HttpClient Http
 
 <PageTitle>Index</PageTitle>
 
 <h1>Hello, world!</h1>
 
 Welcome to your new app.
+<table>
+    @foreach (var outboxEntity in outboxEntities)
+    {
+        if (outboxEntity == outboxEntities[0])
+            index = 0;
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+        var idx = index++;
+
+        <tr>
+            <td>@outboxEntity.Id</td>
+            <td>
+                <InputText bind-Value="outboxEntities[idx].Action"></InputText>
+            </td>
+            <td>
+                <select @bind="outboxEntities[idx].Status">
+                    <option value="@OutboxRecordStatus.ReadyToExecute">@OutboxRecordStatus.ReadyToExecute</option>
+                    <option value="@OutboxRecordStatus.InProgress">@OutboxRecordStatus.InProgress</option>
+                    <option value="@OutboxRecordStatus.Failed">@OutboxRecordStatus.Failed</option>
+                    <option value="@OutboxRecordStatus.WaitingForRetry">@OutboxRecordStatus.WaitingForRetry</option>
+                    <option value="@OutboxRecordStatus.Completed">@OutboxRecordStatus.Completed</option>
+                </select>
+            </td>
+            <td>
+                <InputText bind-Value="outboxEntities[idx].Payload"></InputText>
+            </td>
+        </tr>
+    }
+</table>
+<SurveyPrompt Title="How is Blazor working for you?"/>
+
+@code
+{
+    public int index;
+    public OutboxEntityApiModel[]? outboxEntities;
+
+    protected override async Task OnInitializedAsync()
+    {
+        outboxEntities = await Http.GetFromJsonAsync<OutboxEntityApiModel[]>("OutboxEntity");
+    }
+}

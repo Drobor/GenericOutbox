@@ -1,4 +1,4 @@
-using ManagementUi.Client;
+using GenericOutbox.ManagementUi.Client;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
