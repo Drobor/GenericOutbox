@@ -19,6 +19,8 @@ public class OutboxEntity
     public DateTime LastUpdatedUtc { get; set; }
     public string Version { get; set; }
 
+    public string? Metadata { get; set; }
+
     public virtual OutboxEntity Parent { get; set; }
 
     public string PayloadString => Encoding.UTF8.GetString(Payload);

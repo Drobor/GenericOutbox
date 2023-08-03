@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using GenericOutbox.DataAccess.Entities;
 using GenericOutbox.DataAccess.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,7 @@ public static class OutboxServiceCollectionExtensions
         services.AddSingleton(options);
         services.AddSingleton(typeof(ISerializer), outboxSettings.SerializerType);
         services.AddScoped(typeof(IRetryStrategy), outboxSettings.RetryStrategyType);
+        services.AddSingleton(new HooksProvider(outboxSettings.Hooks));
 
         return services;
     }
@@ -50,6 +52,7 @@ public static class OutboxServiceCollectionExtensions
         internal List<Type> OutboxTypes = new List<Type>();
         internal Type RetryStrategyType = typeof(RetryStrategy);
         internal Type SerializerType = typeof(JsonOutboxSerializer);
+        internal Func<OutboxEntity, Task>[] Hooks = Array.Empty<Func<OutboxEntity, Task>>();
 
         public OutboxSettingsBuilder Add<T>()
         {
@@ -66,6 +69,12 @@ public static class OutboxServiceCollectionExtensions
         public OutboxSettingsBuilder UseSerializer<T>() where T : ISerializer
         {
             SerializerType = typeof(T);
+            return this;
+        }
+        
+        public OutboxSettingsBuilder UseHooks(params Func<OutboxEntity, Task>[] hooks)
+        {
+            this.Hooks = hooks;
             return this;
         }
     }

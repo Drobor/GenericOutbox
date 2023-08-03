@@ -63,6 +63,9 @@ namespace PersonService.Migrations
                     b.Property<Guid?>("Lock")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Metadata")
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
