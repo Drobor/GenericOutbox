@@ -16,7 +16,6 @@ public static class OutboxServiceCollectionExtensions
         services.AddScoped<IOutboxDataStorageService, OutboxDataStorageService<TDbContext>>();
         services.AddScoped<IOutboxHandlerContext, OutboxHandlerContext>();
 
-
         services.AddHostedService<OutboxDispatcherHostedService>();
 
         var outboxSettings = new OutboxSettingsBuilder();

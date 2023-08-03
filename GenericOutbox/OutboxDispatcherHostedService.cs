@@ -32,7 +32,7 @@ public class OutboxDispatcherHostedService : IHostedService
         _logger = logger;
         _outboxOptions = outboxOptions;
         _outboxActionHandlerFactory = outboxActionHandlerFactory;
-        this._hooks = hooks;
+        _hooks = hooks;
 
         _recordsChannel = Channel.CreateUnbounded<OutboxEntity>();
         _cancellationTokenSource = new CancellationTokenSource();
