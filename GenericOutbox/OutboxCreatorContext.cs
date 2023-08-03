@@ -16,12 +16,19 @@ class OutboxCreatorContext<TDbContext> : IOutboxCreatorContext where TDbContext 
     private int? _previousStepId;
     private Guid? _lock;
     private readonly Guid _scopeId;
+    private readonly string _metadata;
 
-    public OutboxCreatorContext(TDbContext dbContext, ISerializer serializer, OutboxOptions outboxOptions)
+    public OutboxCreatorContext(TDbContext dbContext, ISerializer serializer, OutboxOptions outboxOptions, IServiceProvider serviceProvider)
     {
         _dbContext = dbContext;
         _serializer = serializer;
         _outboxOptions = outboxOptions;
+        
+        var metadataProviderService = serviceProvider.GetService(typeof(IOutboxMetadataProvider));
+        if (metadataProviderService != null)
+        {
+            _metadata = ((IOutboxMetadataProvider)metadataProviderService).GetMetadata();
+        }
 
         _lockClearer = new LockClearer(this);
         _scopeId = Guid.NewGuid();
@@ -67,7 +74,8 @@ class OutboxCreatorContext<TDbContext> : IOutboxCreatorContext where TDbContext 
             Version = _outboxOptions.Version,
             Lock = _lock,
             LastUpdatedUtc = utcNow,
-            CreatedUtc = utcNow
+            CreatedUtc = utcNow,
+            Metadata = _metadata
         };
 
         _dbContext.Set<OutboxEntity>().Add(newRecord);

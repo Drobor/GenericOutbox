@@ -2,19 +2,47 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using PersonService.DataAccess;
 
 #nullable disable
 
-namespace Test.Migrations
+namespace PersonService.Migrations
 {
-    [DbContext(typeof(TestDbContext))]
-    partial class TestDbContextModelSnapshot : ModelSnapshot
+    [DbContext(typeof(PersonServiceDbContext))]
+    [Migration("20230803163320_AddMetadata")]
+    partial class AddMetadata
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
+
+            modelBuilder.Entity("GenericOutbox.DataAccess.Entities.OutboxDataEntity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<byte[]>("Data")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ScopeId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ScopeId");
+
+                    b.ToTable("OutboxDataEntity");
+                });
 
             modelBuilder.Entity("GenericOutbox.DataAccess.Entities.OutboxEntity", b =>
                 {
@@ -77,7 +105,18 @@ namespace Test.Migrations
 
                     b.HasIndex("Version");
 
-                    b.ToTable("OutboxEntities");
+                    b.ToTable("OutboxEntity");
+                });
+
+            modelBuilder.Entity("PersonService.DataAccess.Entities.Person", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Persons");
                 });
 
             modelBuilder.Entity("GenericOutbox.DataAccess.Entities.OutboxEntity", b =>

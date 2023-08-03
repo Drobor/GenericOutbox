@@ -17,6 +17,7 @@ public class OutboxDispatcherHostedService : IHostedService
     private readonly IOutboxActionHandlerFactory _outboxActionHandlerFactory;
     private readonly ILogger<OutboxDispatcherHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private readonly HooksProvider _hooksProvider;
 
     private readonly Channel<OutboxEntity> _recordsChannel;
     private readonly CancellationToken _cancellationToken;
@@ -25,12 +26,13 @@ public class OutboxDispatcherHostedService : IHostedService
 
     private int _waitingHandlersCount;
 
-    public OutboxDispatcherHostedService(IServiceProvider serviceProvider, ILogger<OutboxDispatcherHostedService> logger, OutboxOptions outboxOptions, IOutboxActionHandlerFactory outboxActionHandlerFactory)
+    public OutboxDispatcherHostedService(IServiceProvider serviceProvider, ILogger<OutboxDispatcherHostedService> logger, OutboxOptions outboxOptions, IOutboxActionHandlerFactory outboxActionHandlerFactory, HooksProvider hooksProvider)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _outboxOptions = outboxOptions;
         _outboxActionHandlerFactory = outboxActionHandlerFactory;
+        this._hooksProvider = hooksProvider;
 
         _recordsChannel = Channel.CreateUnbounded<OutboxEntity>();
         _cancellationTokenSource = new CancellationTokenSource();
@@ -115,6 +117,10 @@ public class OutboxDispatcherHostedService : IHostedService
                     if (handler == null)
                         throw new OutboxHandlerNotFoundException($"Handler for action {outboxRecord.Action} not found");
 
+                    foreach (var hook in this._hooksProvider.Hooks)
+                    {
+                        await hook(outboxRecord);
+                    }
                     await handler.Handle(outboxRecord);
 
                     await outboxDataAccess.CompleteRecord(outboxRecord);
