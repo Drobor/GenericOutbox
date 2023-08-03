@@ -17,8 +17,7 @@ public class OutboxDispatcherHostedService : IHostedService
     private readonly IOutboxActionHandlerFactory _outboxActionHandlerFactory;
     private readonly ILogger<OutboxDispatcherHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IEnumerable<IOutboxHook> _hooks;
-
+    
     private readonly Channel<OutboxEntity> _recordsChannel;
     private readonly CancellationToken _cancellationToken;
     private readonly CancellationTokenSource _cancellationTokenSource;
@@ -26,14 +25,13 @@ public class OutboxDispatcherHostedService : IHostedService
 
     private int _waitingHandlersCount;
 
-    public OutboxDispatcherHostedService(IServiceProvider serviceProvider, ILogger<OutboxDispatcherHostedService> logger, OutboxOptions outboxOptions, IOutboxActionHandlerFactory outboxActionHandlerFactory, IEnumerable<IOutboxHook> hooks)
+    public OutboxDispatcherHostedService(IServiceProvider serviceProvider, ILogger<OutboxDispatcherHostedService> logger, OutboxOptions outboxOptions, IOutboxActionHandlerFactory outboxActionHandlerFactory)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _outboxOptions = outboxOptions;
         _outboxActionHandlerFactory = outboxActionHandlerFactory;
-        _hooks = hooks;
-
+        
         _recordsChannel = Channel.CreateUnbounded<OutboxEntity>();
         _cancellationTokenSource = new CancellationTokenSource();
         _cancellationToken = _cancellationTokenSource.Token;
@@ -117,7 +115,9 @@ public class OutboxDispatcherHostedService : IHostedService
                     if (handler == null)
                         throw new OutboxHandlerNotFoundException($"Handler for action {outboxRecord.Action} not found");
 
-                    foreach (var hook in this._hooks)
+                    var hooks = scope.ServiceProvider.GetServices<IOutboxHook>();
+
+                    foreach (var hook in hooks)
                     {
                         await hook.Execute(outboxRecord);
                     }
