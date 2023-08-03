@@ -4,10 +4,10 @@ namespace GenericOutbox;
 
 public class HooksProvider
 {
-    public HooksProvider(Func<OutboxEntity, Task>[] hooks)
+    public HooksProvider(IEnumerable<IOutboxHook> hooks)
     {
         this.Hooks = hooks;
     }
 
-    public Func<OutboxEntity, Task>[] Hooks { get; private set; } 
+    public IEnumerable<IOutboxHook> Hooks { get; private set; } 
 }

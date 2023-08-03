@@ -42,7 +42,11 @@ public static class OutboxServiceCollectionExtensions
         services.AddSingleton(options);
         services.AddSingleton(typeof(ISerializer), outboxSettings.SerializerType);
         services.AddScoped(typeof(IRetryStrategy), outboxSettings.RetryStrategyType);
-        services.AddSingleton(new HooksProvider(outboxSettings.Hooks));
+
+        foreach (var hook in outboxSettings.Hooks)
+        {
+            services.AddScoped(typeof(IOutboxHook), hook);
+        }
 
         return services;
     }
@@ -52,7 +56,7 @@ public static class OutboxServiceCollectionExtensions
         internal List<Type> OutboxTypes = new List<Type>();
         internal Type RetryStrategyType = typeof(RetryStrategy);
         internal Type SerializerType = typeof(JsonOutboxSerializer);
-        internal Func<OutboxEntity, Task>[] Hooks = Array.Empty<Func<OutboxEntity, Task>>();
+        internal List<Type> Hooks = new List<Type>();
 
         public OutboxSettingsBuilder Add<T>()
         {
@@ -72,9 +76,9 @@ public static class OutboxServiceCollectionExtensions
             return this;
         }
         
-        public OutboxSettingsBuilder UseHooks(params Func<OutboxEntity, Task>[] hooks)
+        public OutboxSettingsBuilder UseHook<T>() where T : IOutboxHook
         {
-            this.Hooks = hooks;
+            this.Hooks.Add(typeof(T));
             return this;
         }
     }
