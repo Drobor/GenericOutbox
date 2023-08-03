@@ -29,7 +29,8 @@ public class Startup : IStartup
             },
             cfg => cfg
                 .Add<IOutboxedSchoolClient>()
-                .UseRetryStrategy<InstantRetryStrategy>());
+                .UseRetryStrategy<InstantRetryStrategy>()
+                .UseHook<TestHook>());
 
         ConfigureApiClients(services);
     }

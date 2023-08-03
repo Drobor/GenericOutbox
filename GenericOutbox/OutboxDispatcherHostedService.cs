@@ -17,8 +17,7 @@ public class OutboxDispatcherHostedService : IHostedService
     private readonly IOutboxActionHandlerFactory _outboxActionHandlerFactory;
     private readonly ILogger<OutboxDispatcherHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly HooksProvider _hooksProvider;
-
+    
     private readonly Channel<OutboxEntity> _recordsChannel;
     private readonly CancellationToken _cancellationToken;
     private readonly CancellationTokenSource _cancellationTokenSource;
@@ -26,14 +25,13 @@ public class OutboxDispatcherHostedService : IHostedService
 
     private int _waitingHandlersCount;
 
-    public OutboxDispatcherHostedService(IServiceProvider serviceProvider, ILogger<OutboxDispatcherHostedService> logger, OutboxOptions outboxOptions, IOutboxActionHandlerFactory outboxActionHandlerFactory, HooksProvider hooksProvider)
+    public OutboxDispatcherHostedService(IServiceProvider serviceProvider, ILogger<OutboxDispatcherHostedService> logger, OutboxOptions outboxOptions, IOutboxActionHandlerFactory outboxActionHandlerFactory)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
         _outboxOptions = outboxOptions;
         _outboxActionHandlerFactory = outboxActionHandlerFactory;
-        this._hooksProvider = hooksProvider;
-
+        
         _recordsChannel = Channel.CreateUnbounded<OutboxEntity>();
         _cancellationTokenSource = new CancellationTokenSource();
         _cancellationToken = _cancellationTokenSource.Token;
@@ -117,9 +115,11 @@ public class OutboxDispatcherHostedService : IHostedService
                     if (handler == null)
                         throw new OutboxHandlerNotFoundException($"Handler for action {outboxRecord.Action} not found");
 
-                    foreach (var hook in this._hooksProvider.Hooks)
+                    var hooks = scope.ServiceProvider.GetServices<IOutboxHook>();
+
+                    foreach (var hook in hooks)
                     {
-                        await hook(outboxRecord);
+                        await hook.Execute(outboxRecord);
                     }
                     await handler.Handle(outboxRecord);
 
