@@ -109,6 +109,7 @@ public class OutboxDispatcherHostedService : IHostedService
 
                 try
                 {
+                    scope.ServiceProvider.GetRequiredService<IOutboxServiceLocator>().ServiceProvider = scope.ServiceProvider;
                     outboxHandlerContext.ScopeId = outboxRecord.ScopeId;
                     handler = _outboxActionHandlerFactory.TryGet(scope.ServiceProvider, outboxRecord.Action);
 
@@ -121,6 +122,7 @@ public class OutboxDispatcherHostedService : IHostedService
                     {
                         await hook.Execute(outboxRecord);
                     }
+
                     await handler.Handle(outboxRecord);
 
                     await outboxDataAccess.CompleteRecord(outboxRecord);
