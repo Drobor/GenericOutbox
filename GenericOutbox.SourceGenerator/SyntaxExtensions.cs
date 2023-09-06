@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
@@ -10,5 +11,15 @@ namespace GenericOutbox.SourceGenerator
         
         private static INamespaceSymbol GetNamespace(this SyntaxNode node, SemanticModel semanticModel) =>
             semanticModel.GetTypeInfo(node).Type?.ContainingNamespace;
+
+        public static List<ISymbol> GetAllMembers(this INamedTypeSymbol type)
+        {
+            var result = type.GetMembers().ToList();
+
+            foreach (var baseInterface in type.Interfaces)
+                result.AddRange(baseInterface.GetAllMembers());
+
+            return result;
+        }
     }
 }

@@ -23,11 +23,13 @@ public static class TestConfiguration
             },
             x => x.Add<IOutboxedKeyStorageService>()
                 .Add<IOutboxedOutboxTestHelperService>()
-                .Add<IOutboxedKeyStorageServiceHelper>());
+                .Add<IOutboxedKeyStorageServiceHelper>()
+                .Add<IOutboxedGuidKeyStorageService>());
 
         services.AddScoped<IKeyStorageService, KeyStorageService>();
         services.AddScoped<IOutboxTestHelperService, OutboxTestHelperService>();
         services.AddScoped<IKeyStorageServiceHelper, KeyStorageServiceHelper>();
+        services.AddScoped<IGuidKeyStorageService, GuidKeyStorageService>();
         services.AddScoped<Dictionary<string, string>>();
         services.AddLogging();
 
