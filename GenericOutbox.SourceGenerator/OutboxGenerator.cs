@@ -63,7 +63,7 @@ namespace GenericOutbox.SourceGenerator
             var className = interfaceName.Substring(1);
 
             var methods = baseInterface
-                .GetMembers()
+                .GetAllMembers()
                 .OfType<IMethodSymbol>()
                 .ToArray();
 

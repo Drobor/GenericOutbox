@@ -55,6 +55,7 @@ public class TimeColumnTests : DependencyInjectionTestBase
         Assert.True(record.LastUpdatedUtc <= DateTime.UtcNow);
     }
 
+    [Fact]
     public async Task BasicFlowTest_ForFailed()
     {
         var scopeId = (Guid)_outboxCreatorContext.GetType().GetField("_scopeId", BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Public).GetValue(_outboxCreatorContext);

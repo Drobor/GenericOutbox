@@ -40,6 +40,7 @@ public static class OutboxServiceCollectionExtensions
         services.AddSingleton<IOutboxActionHandlerFactory>(new OutboxActionOutboxActionHandlerFactory(actionNameMap));
         services.AddSingleton(options);
         services.AddSingleton(typeof(ISerializer), outboxSettings.SerializerType);
+        services.AddSingleton<IOutboxServiceLocator, OutboxServiceLocator>();
         services.AddScoped(typeof(IRetryStrategy), outboxSettings.RetryStrategyType);
 
         foreach (var hook in outboxSettings.Hooks)
