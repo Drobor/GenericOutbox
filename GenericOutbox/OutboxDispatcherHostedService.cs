@@ -17,7 +17,7 @@ public class OutboxDispatcherHostedService : IHostedService
     private readonly IOutboxActionHandlerFactory _outboxActionHandlerFactory;
     private readonly ILogger<OutboxDispatcherHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    
+
     private readonly Channel<OutboxEntity> _recordsChannel;
     private readonly CancellationToken _cancellationToken;
     private readonly CancellationTokenSource _cancellationTokenSource;
@@ -31,7 +31,7 @@ public class OutboxDispatcherHostedService : IHostedService
         _logger = logger;
         _outboxOptions = outboxOptions;
         _outboxActionHandlerFactory = outboxActionHandlerFactory;
-        
+
         _recordsChannel = Channel.CreateUnbounded<OutboxEntity>();
         _cancellationTokenSource = new CancellationTokenSource();
         _cancellationToken = _cancellationTokenSource.Token;
@@ -129,6 +129,8 @@ public class OutboxDispatcherHostedService : IHostedService
                 }
                 catch (Exception ex)
                 {
+                    _logger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
+
                     var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
                     var shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
 
