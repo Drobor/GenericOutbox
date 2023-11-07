@@ -1,26 +1,39 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericOutbox", "GenericOutbox\GenericOutbox.csproj", "{19148322-4525-446A-BC29-1DCFE47B0D02}"
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.33414.496
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenericOutbox", "GenericOutbox\GenericOutbox.csproj", "{19148322-4525-446A-BC29-1DCFE47B0D02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericOutbox.SourceGenerator", "GenericOutbox.SourceGenerator\GenericOutbox.SourceGenerator.csproj", "{B88A9832-427A-4579-835A-857D32576CDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "GenericOutbox.SourceGenerator", "GenericOutbox.SourceGenerator\GenericOutbox.SourceGenerator.csproj", "{B88A9832-427A-4579-835A-857D32576CDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{CD00B0E8-BEF5-430C-91A0-1EA64DEF297E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Test", "Test\Test.csproj", "{CD00B0E8-BEF5-430C-91A0-1EA64DEF297E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0783F2A4-7FFE-4653-8C26-5A995B8FD3AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonService", "Tests\PersonService\PersonService.csproj", "{BA592C11-9C03-4D72-A95A-7F6755895B55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PersonService", "Tests\PersonService\PersonService.csproj", "{BA592C11-9C03-4D72-A95A-7F6755895B55}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolService", "Tests\SchoolService\SchoolService.csproj", "{53F45A41-85B3-4D4C-AB90-EF8C4CD91BD7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SchoolService", "Tests\SchoolService\SchoolService.csproj", "{53F45A41-85B3-4D4C-AB90-EF8C4CD91BD7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestServicesCommon", "Tests\TestServicesCommon\TestServicesCommon.csproj", "{4AFFEED3-1C40-4F59-A078-AF47B97A4D62}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestServicesCommon", "Tests\TestServicesCommon\TestServicesCommon.csproj", "{4AFFEED3-1C40-4F59-A078-AF47B97A4D62}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SchoolService.Client", "Tests\SchoolService.Client\SchoolService.Client.csproj", "{0263B194-E128-4A89-BB47-D4BD693C5FAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SchoolService.Client", "Tests\SchoolService.Client\SchoolService.Client.csproj", "{0263B194-E128-4A89-BB47-D4BD693C5FAD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonService.Client", "Tests\PersonService.Client\PersonService.Client.csproj", "{1C4723CE-7DCF-4489-A352-17B810EA0922}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PersonService.Client", "Tests\PersonService.Client\PersonService.Client.csproj", "{1C4723CE-7DCF-4489-A352-17B810EA0922}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EndToEndTests", "Tests\EndToEndTests\EndToEndTests.csproj", "{E2514C42-EBB1-4DBE-B8C4-11F8D1A1570F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EndToEndTests", "Tests\EndToEndTests\EndToEndTests.csproj", "{E2514C42-EBB1-4DBE-B8C4-11F8D1A1570F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntegrationTests", "Tests\IntegrationTests\IntegrationTests.csproj", "{3C3A8730-4E6D-43BC-B177-5CE5511F6040}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IntegrationTests", "Tests\IntegrationTests\IntegrationTests.csproj", "{3C3A8730-4E6D-43BC-B177-5CE5511F6040}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ManagementUi", "ManagementUi", "{1ED60D32-E7D5-47DC-8A93-82BC6E95DAFC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericOutbox.ManagementUi", "ManagementUi\Server\GenericOutbox.ManagementUi.csproj", "{87E62056-B8F7-4DEC-A21A-081B38195CD4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericOutbox.ManagementUi.Client", "ManagementUi\Client\GenericOutbox.ManagementUi.Client.csproj", "{34E1813A-511D-4135-A032-40311A0C4C25}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericOutbox.ManagementUi.Shared", "ManagementUi\Shared\GenericOutbox.ManagementUi.Shared.csproj", "{C5C8AC24-6F8F-48D9-BB3A-5D44007AE395}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GenericOutbox.ManagementUi.App", "ManagementUi\GenericOutbox.ManagementUi.App\GenericOutbox.ManagementUi.App.csproj", "{DC50F210-3078-4DD3-BF79-4837D33F3AF7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -68,6 +81,25 @@ Global
 		{3C3A8730-4E6D-43BC-B177-5CE5511F6040}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3C3A8730-4E6D-43BC-B177-5CE5511F6040}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3C3A8730-4E6D-43BC-B177-5CE5511F6040}.Release|Any CPU.Build.0 = Release|Any CPU
+		{87E62056-B8F7-4DEC-A21A-081B38195CD4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{87E62056-B8F7-4DEC-A21A-081B38195CD4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{87E62056-B8F7-4DEC-A21A-081B38195CD4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{87E62056-B8F7-4DEC-A21A-081B38195CD4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34E1813A-511D-4135-A032-40311A0C4C25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34E1813A-511D-4135-A032-40311A0C4C25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34E1813A-511D-4135-A032-40311A0C4C25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34E1813A-511D-4135-A032-40311A0C4C25}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C5C8AC24-6F8F-48D9-BB3A-5D44007AE395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C5C8AC24-6F8F-48D9-BB3A-5D44007AE395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C5C8AC24-6F8F-48D9-BB3A-5D44007AE395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C5C8AC24-6F8F-48D9-BB3A-5D44007AE395}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DC50F210-3078-4DD3-BF79-4837D33F3AF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DC50F210-3078-4DD3-BF79-4837D33F3AF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DC50F210-3078-4DD3-BF79-4837D33F3AF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DC50F210-3078-4DD3-BF79-4837D33F3AF7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{BA592C11-9C03-4D72-A95A-7F6755895B55} = {0783F2A4-7FFE-4653-8C26-5A995B8FD3AD}
@@ -77,5 +109,9 @@ Global
 		{1C4723CE-7DCF-4489-A352-17B810EA0922} = {0783F2A4-7FFE-4653-8C26-5A995B8FD3AD}
 		{E2514C42-EBB1-4DBE-B8C4-11F8D1A1570F} = {0783F2A4-7FFE-4653-8C26-5A995B8FD3AD}
 		{3C3A8730-4E6D-43BC-B177-5CE5511F6040} = {0783F2A4-7FFE-4653-8C26-5A995B8FD3AD}
+		{87E62056-B8F7-4DEC-A21A-081B38195CD4} = {1ED60D32-E7D5-47DC-8A93-82BC6E95DAFC}
+		{34E1813A-511D-4135-A032-40311A0C4C25} = {1ED60D32-E7D5-47DC-8A93-82BC6E95DAFC}
+		{C5C8AC24-6F8F-48D9-BB3A-5D44007AE395} = {1ED60D32-E7D5-47DC-8A93-82BC6E95DAFC}
+		{DC50F210-3078-4DD3-BF79-4837D33F3AF7} = {1ED60D32-E7D5-47DC-8A93-82BC6E95DAFC}
 	EndGlobalSection
 EndGlobal
