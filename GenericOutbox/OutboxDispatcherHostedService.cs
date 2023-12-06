@@ -106,6 +106,7 @@ public class OutboxDispatcherHostedService : IHostedService
                 using var scope = _serviceProvider.CreateScope();
                 var outboxDataAccess = scope.ServiceProvider.GetRequiredService<IOutboxDataAccess>();
                 var outboxHandlerContext = scope.ServiceProvider.GetRequiredService<IOutboxHandlerContext>();
+                var scopeLogger = scope.ServiceProvider.GetRequiredService<ILogger<OutboxDispatcherHostedService>>();
 
                 try
                 {
@@ -129,7 +130,7 @@ public class OutboxDispatcherHostedService : IHostedService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
+                    scopeLogger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
 
                     var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
                     var shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
