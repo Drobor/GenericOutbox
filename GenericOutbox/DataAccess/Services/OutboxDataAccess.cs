@@ -76,12 +76,16 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
     {
         Guid lockId = Guid.NewGuid();
 
-        var recordsToUpdateCount = _rollingOutboxQueryType == 0
-            ? await ReserveNonLockedOutboxRecords(lockId, maxCount)
-            : await ReserveLockedOutboxRecords(lockId, maxCount);
+        var recordsToUpdateCount = _rollingOutboxQueryType switch
+        {
+            0 => await ReserveNonLockedRetryOutboxRecords(lockId, maxCount),
+            1 => await ReserveNonLockedOutboxRecords(lockId, maxCount),
+            2 => await ReserveLockedRetryOutboxRecords(lockId, maxCount),
+            _ => await ReserveLockedOutboxRecords(lockId, maxCount),
+        };
 
         if (recordsToUpdateCount < maxCount)
-            _rollingOutboxQueryType = (_rollingOutboxQueryType + 1) % 2;
+            _rollingOutboxQueryType = (_rollingOutboxQueryType + 1) % 4;
 
         if (recordsToUpdateCount == 0)
             return Array.Empty<OutboxEntity>();
@@ -99,23 +103,49 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
 
         return await _dbContext.Set<OutboxEntity>()
             .Where(
-                r => _dbContext
-                    .Set<OutboxEntity>()
-                    .Where(
-                        x => x.Lock != null
-                             && !_dbContext.Set<OutboxEntity>().Any(y => y.Lock == x.Lock && !s_unlockedStatuses.Contains(y.Status))
-                             && ((x.ParentId == null || x.Parent.Status == OutboxRecordStatus.Completed)
+                r =>
+                    r.HandlerLock == null
+                    && r.Status == OutboxRecordStatus.ReadyToExecute
+                    && _dbContext
+                        .Set<OutboxEntity>()
+                        .Where(
+                            x => x.Lock != null
+                                 && !_dbContext.Set<OutboxEntity>().Any(y => y.Lock == x.Lock && !s_unlockedStatuses.Contains(y.Status))
+                                 && (x.ParentId == null || x.Parent.Status == OutboxRecordStatus.Completed)
                                  && x.Status == OutboxRecordStatus.ReadyToExecute
                                  && x.Version == _outboxOptions.Version
-                                 && x.HandlerLock == null
-                                 ||
-                                 x.RetryTimeoutUtc < now
+                                 && x.HandlerLock == null)
+                        .GroupBy(x => x.Lock)
+                        .Select(x => x.OrderBy(x => x.Id).FirstOrDefault().Id)
+                        .Take(maxCount)
+                        .Contains(r.Id))
+            .ExecuteUpdateAsync(
+                x => x
+                    .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+    }
+
+    private async Task<int> ReserveLockedRetryOutboxRecords(Guid handlerLockId, int maxCount)
+    {
+        var now = DateTime.UtcNow;
+
+        return await _dbContext.Set<OutboxEntity>()
+            .Where(
+                r =>
+                    r.HandlerLock == null
+                    && r.Status == OutboxRecordStatus.WaitingForRetry
+                    && _dbContext
+                        .Set<OutboxEntity>()
+                        .Where(
+                            x => x.Lock != null
+                                 && !_dbContext.Set<OutboxEntity>().Any(y => y.Lock == x.Lock && !s_unlockedStatuses.Contains(y.Status))
+                                 && x.RetryTimeoutUtc < now
                                  && x.Version == _outboxOptions.Version
-                                 && x.HandlerLock == null))
-                    .GroupBy(x => x.Lock)
-                    .Select(x => x.OrderBy(x => x.Id).FirstOrDefault().Id)
-                    .Take(maxCount)
-                    .Contains(r.Id))
+                                 && x.HandlerLock == null)
+                        .GroupBy(x => x.Lock)
+                        .Select(x => x.OrderBy(x => x.Id).FirstOrDefault().Id)
+                        .Take(maxCount)
+                        .Contains(r.Id))
             .ExecuteUpdateAsync(
                 x => x
                     .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
@@ -129,13 +159,25 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
         return await _dbContext
             .Set<OutboxEntity>()
             .Where(
-                x => (x.ParentId == null || x.Parent.Status == OutboxRecordStatus.Completed)
-                     && x.Status == OutboxRecordStatus.ReadyToExecute
+                x =>
+                     x.RetryTimeoutUtc < now
                      && x.Version == _outboxOptions.Version
                      && x.HandlerLock == null
-                     && x.Lock == null
-                     ||
-                     x.RetryTimeoutUtc < now
+                     && x.Lock == null)
+            .Take(maxCount)
+            .ExecuteUpdateAsync(
+                x => x
+                    .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+    }
+
+    private async Task<int> ReserveNonLockedRetryOutboxRecords(Guid handlerLockId, int maxCount)
+    {
+        return await _dbContext
+            .Set<OutboxEntity>()
+            .Where(
+                x => (x.ParentId == null || x.Parent.Status == OutboxRecordStatus.Completed)
+                     && x.Status == OutboxRecordStatus.ReadyToExecute
                      && x.Version == _outboxOptions.Version
                      && x.HandlerLock == null
                      && x.Lock == null)
