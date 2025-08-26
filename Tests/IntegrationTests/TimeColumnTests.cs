@@ -43,7 +43,7 @@ public class TimeColumnTests : DependencyInjectionTestBase
         Assert.True(record.CreatedUtc >= beforeRecordWasCreated);
         Assert.True(record.CreatedUtc <= afterRecordWasCreated);
 
-        await Task.Delay(700);
+        await Task.Delay(1500);
 
         record = await _dbContext.Set<OutboxEntity>()
             .AsNoTracking()
@@ -73,7 +73,7 @@ public class TimeColumnTests : DependencyInjectionTestBase
         Assert.True(record.CreatedUtc >= beforeRecordWasCreated);
         Assert.True(record.CreatedUtc <= afterRecordWasCreated);
 
-        await Task.Delay(700);
+        await Task.Delay(1500);
 
         record = await _dbContext.Set<OutboxEntity>()
             .AsNoTracking()

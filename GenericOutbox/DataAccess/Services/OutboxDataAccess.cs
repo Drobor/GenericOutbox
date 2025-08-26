@@ -123,7 +123,8 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .ExecuteUpdateAsync(
                 x => x
                     .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
-                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId)
+                    .SetProperty(r => r.LastUpdatedUtc, r => now));
     }
 
     private async Task<int> ReserveLockedRetryOutboxRecords(Guid handlerLockId, int maxCount)
@@ -150,7 +151,8 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .ExecuteUpdateAsync(
                 x => x
                     .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
-                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId)
+                    .SetProperty(r => r.LastUpdatedUtc, r => now));
     }
 
     private async Task<int> ReserveNonLockedOutboxRecords(Guid handlerLockId, int maxCount)
@@ -169,11 +171,14 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .ExecuteUpdateAsync(
                 x => x
                     .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
-                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId)
+                    .SetProperty(r => r.LastUpdatedUtc, r => now));
     }
 
     private async Task<int> ReserveNonLockedRetryOutboxRecords(Guid handlerLockId, int maxCount)
     {
+        var now = DateTime.UtcNow;
+
         return await _dbContext
             .Set<OutboxEntity>()
             .Where(
@@ -186,13 +191,16 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .ExecuteUpdateAsync(
                 x => x
                     .SetProperty(r => r.Status, r => OutboxRecordStatus.InProgress)
-                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId)
+                    .SetProperty(r => r.LastUpdatedUtc, r => now));
     }
 
     private async Task<int> ReserveStuckInProgressRecords(Guid handlerLockId, int maxCount)
     {
         if (_outboxOptions.InProgressRecordTimeout == null)
             return 0;
+
+        var now = DateTime.UtcNow;
 
         var stuckCutoff = DateTime.UtcNow - _outboxOptions.InProgressRecordTimeout;
 
@@ -204,6 +212,7 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .Take(maxCount)
             .ExecuteUpdateAsync(
                 x => x
-                    .SetProperty(r => r.HandlerLock, r => handlerLockId));
+                    .SetProperty(r => r.HandlerLock, r => handlerLockId)
+                    .SetProperty(r => r.LastUpdatedUtc, r => now));
     }
 }
