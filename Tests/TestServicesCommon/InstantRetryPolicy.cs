@@ -17,7 +17,7 @@ public class InstantRetryStrategy : IRetryStrategy
         HttpStatusCode.TooManyRequests
     };
 
-    public TimeSpan? ShouldRetry(Exception ex, OutboxEntity entity)
+    public ExecutionResult HandleError(Exception ex, OutboxEntity entity)
     {
         var shouldRetry =
             (ex is HttpRequestException httpEx && s_retryStatusCodes.Contains(httpEx.StatusCode))
@@ -25,9 +25,9 @@ public class InstantRetryStrategy : IRetryStrategy
             || IsTransientNswagApiException(ex);
 
         if (shouldRetry)
-            return TimeSpan.FromMilliseconds(1);
+            return ExecutionResult.RetryAfter(TimeSpan.FromMilliseconds(1));
 
-        return null;
+        return ExecutionResult.Fail;
     }
 
     private bool IsTransientNswagApiException(Exception ex)

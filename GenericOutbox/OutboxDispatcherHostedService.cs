@@ -126,7 +126,7 @@ public class OutboxDispatcherHostedService : IHostedService
 
                     await handler.Handle(outboxRecord);
 
-                    await outboxDataAccess.CompleteRecord(outboxRecord);
+                    await outboxDataAccess.CommitExecutionResult(outboxRecord, ExecutionResult.Success);
                 }
                 catch (Exception ex)
                 {
@@ -148,28 +148,20 @@ public class OutboxDispatcherHostedService : IHostedService
         scopeLogger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
 
         var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
-        TimeSpan? shouldRetry;
+        var executionResult = ExecutionResult.Fail;
 
         try
         {
-            shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
+            executionResult = retryStrategy.HandleError(ex, outboxRecord);
         }
         catch (Exception retryEx)
         {
             scopeLogger.LogError(retryEx, "Error occured handling retry strategy for outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
-            shouldRetry = null;
         }
 
         try
         {
-            if (shouldRetry.HasValue)
-            {
-                await outboxDataAccess.SendRecordToRetry(outboxRecord, shouldRetry.Value);
-            }
-            else
-            {
-                await outboxDataAccess.FailRecord(outboxRecord);
-            }
+            await outboxDataAccess.CommitExecutionResult(outboxRecord, executionResult);
         }
         catch (Exception resolveErrorEx)
         {
