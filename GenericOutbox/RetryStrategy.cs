@@ -16,15 +16,15 @@ public class RetryStrategy : IRetryStrategy
         HttpStatusCode.TooManyRequests
     };
 
-    public TimeSpan? ShouldRetry(Exception ex, OutboxEntity entity)
+    public ExecutionResult HandleError(Exception ex, OutboxEntity entity)
     {
         var shouldRetry =
             (ex is HttpRequestException httpEx && s_retryStatusCodes.Contains(httpEx.StatusCode))
             || ex is SocketException;
 
         if (shouldRetry)
-            return TimeSpan.FromMinutes(1 << entity.RetriesCount);
+            return ExecutionResult.RetryAfter(TimeSpan.FromMinutes(1 << entity.RetriesCount));
 
-        return null;
+        return ExecutionResult.Fail;
     }
 }

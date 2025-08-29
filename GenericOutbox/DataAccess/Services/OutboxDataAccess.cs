@@ -1,5 +1,5 @@
-using System.Globalization;
 using GenericOutbox.DataAccess.Entities;
+using GenericOutbox.DataAccess.Models;
 using GenericOutbox.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,40 +25,9 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
         _outboxOptions = outboxOptions;
     }
 
-    public async Task CompleteRecord(OutboxEntity outboxEntity)
+    public async Task CommitExecutionResult(OutboxEntity outboxEntity, ExecutionResult executionResult)
     {
         var now = DateTime.UtcNow;
-
-        await _dbContext
-            .Set<OutboxEntity>()
-            .Where(x => x.Id == outboxEntity.Id)
-            .ExecuteUpdateAsync(
-                x => x
-                    .SetProperty(r => r.Status, OutboxRecordStatus.Completed)
-                    .SetProperty(r => r.LastUpdatedUtc, r => now)
-                    .SetProperty(r => r.HandlerLock, r => null)
-                    .SetProperty(r => r.RetryTimeoutUtc, r => null)); //todo: handleResponse?
-    }
-
-    public async Task FailRecord(OutboxEntity outboxEntity)
-    {
-        var now = DateTime.UtcNow;
-
-        await _dbContext
-            .Set<OutboxEntity>()
-            .Where(x => x.Id == outboxEntity.Id)
-            .ExecuteUpdateAsync(
-                x => x
-                    .SetProperty(r => r.Status, OutboxRecordStatus.Failed)
-                    .SetProperty(r => r.LastUpdatedUtc, r => now)
-                    .SetProperty(r => r.HandlerLock, r => null)
-                    .SetProperty(r => r.RetryTimeoutUtc, r => null));
-    }
-
-    public async Task SendRecordToRetry(OutboxEntity outboxEntity, TimeSpan retryInterval)
-    {
-        var now = DateTime.UtcNow;
-        var retryTime = now + retryInterval;
 
         await _dbContext
             .Set<OutboxEntity>()
@@ -66,13 +35,13 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .ExecuteUpdateAsync(
                 x => x
                     .SetProperty(r => r.RetriesCount, r => r.RetriesCount + 1)
-                    .SetProperty(r => r.Status, OutboxRecordStatus.WaitingForRetry)
-                    .SetProperty(r => r.RetryTimeoutUtc, r => retryTime)
+                    .SetProperty(r => r.Status, executionResult.Status)
+                    .SetProperty(r => r.RetryTimeoutUtc, r => executionResult.RetryTimeoutUtc)
                     .SetProperty(r => r.LastUpdatedUtc, r => now)
                     .SetProperty(r => r.HandlerLock, r => null));
     }
 
-    public async Task<OutboxEntity[]> GetOutboxRecords(int maxCount)
+    public async Task<OutboxEntityDispatchModel[]> GetOutboxRecords(int maxCount)
     {
         Guid lockId = Guid.NewGuid();
 
@@ -85,24 +54,31 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             _ => await ReserveStuckInProgressRecords(lockId, maxCount)
         };
 
+        var stuckInProgress = _rollingOutboxQueryType == 4;
+
         if (recordsToUpdateCount < maxCount)
             _rollingOutboxQueryType = (_rollingOutboxQueryType + 1) % 5;
 
         if (recordsToUpdateCount == 0)
-            return Array.Empty<OutboxEntity>();
+            return Array.Empty<OutboxEntityDispatchModel>();
 
-        return await _dbContext
+        var result = await _dbContext
             .Set<OutboxEntity>()
             .AsNoTracking()
             .Where(x => x.HandlerLock == lockId)
             .ToArrayAsync();
+
+        return result
+            .Select(x => new OutboxEntityDispatchModel(x, stuckInProgress))
+            .ToArray();
     }
 
     private async Task<int> ReserveLockedOutboxRecords(Guid handlerLockId, int maxCount)
     {
         var now = DateTime.UtcNow;
 
-        return await _dbContext.Set<OutboxEntity>()
+        return await _dbContext
+            .Set<OutboxEntity>()
             .Where(
                 r =>
                     r.HandlerLock == null
@@ -131,7 +107,8 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
     {
         var now = DateTime.UtcNow;
 
-        return await _dbContext.Set<OutboxEntity>()
+        return await _dbContext
+            .Set<OutboxEntity>()
             .Where(
                 r =>
                     r.HandlerLock == null
@@ -163,10 +140,10 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             .Set<OutboxEntity>()
             .Where(
                 x =>
-                     x.RetryTimeoutUtc < now
-                     && x.Version == _outboxOptions.Version
-                     && x.HandlerLock == null
-                     && x.Lock == null)
+                    x.RetryTimeoutUtc < now
+                    && x.Version == _outboxOptions.Version
+                    && x.HandlerLock == null
+                    && x.Lock == null)
             .Take(maxCount)
             .ExecuteUpdateAsync(
                 x => x
@@ -204,7 +181,8 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
 
         var stuckCutoff = DateTime.UtcNow - _outboxOptions.InProgressRecordTimeout;
 
-        return await _dbContext.Set<OutboxEntity>()
+        return await _dbContext
+            .Set<OutboxEntity>()
             .Where(
                 r =>
                     r.Status == OutboxRecordStatus.InProgress

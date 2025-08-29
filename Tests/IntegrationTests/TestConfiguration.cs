@@ -20,11 +20,13 @@ public static class TestConfiguration
             new OutboxOptions
             {
                 Version = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                InProgressRecordTimeout = TimeSpan.FromSeconds(5),
             },
             x => x.Add<IOutboxedKeyStorageService>()
                 .Add<IOutboxedOutboxTestHelperService>()
                 .Add<IOutboxedKeyStorageServiceHelper>()
-                .Add<IOutboxedGuidKeyStorageService>());
+                .Add<IOutboxedGuidKeyStorageService>()
+                .UseRetryStrategy<TestRetryStrategy>());
 
         services.AddScoped<IKeyStorageService, KeyStorageService>();
         services.AddScoped<IOutboxTestHelperService, OutboxTestHelperService>();

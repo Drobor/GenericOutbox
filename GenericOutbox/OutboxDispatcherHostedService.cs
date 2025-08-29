@@ -1,5 +1,6 @@
 ﻿using System.Threading.Channels;
 using GenericOutbox.DataAccess.Entities;
+using GenericOutbox.DataAccess.Models;
 using GenericOutbox.DataAccess.Services;
 using GenericOutbox.Exceptions;
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ public class OutboxDispatcherHostedService : IHostedService
     private readonly ILogger<OutboxDispatcherHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
 
-    private readonly Channel<OutboxEntity> _recordsChannel;
+    private readonly Channel<OutboxEntityDispatchModel> _recordsChannel;
     private readonly CancellationToken _cancellationToken;
     private readonly CancellationTokenSource _cancellationTokenSource;
     private readonly List<Task> _workers;
@@ -32,7 +33,7 @@ public class OutboxDispatcherHostedService : IHostedService
         _outboxOptions = outboxOptions;
         _outboxActionHandlerFactory = outboxActionHandlerFactory;
 
-        _recordsChannel = Channel.CreateUnbounded<OutboxEntity>();
+        _recordsChannel = Channel.CreateUnbounded<OutboxEntityDispatchModel>();
         _cancellationTokenSource = new CancellationTokenSource();
         _cancellationToken = _cancellationTokenSource.Token;
         _workers = new List<Task>();
@@ -97,7 +98,7 @@ public class OutboxDispatcherHostedService : IHostedService
     {
         try
         {
-            await foreach (var outboxRecord in _recordsChannel.Reader.ReadAllAsync(_cancellationToken))
+            await foreach (var (outboxRecord, stuckInProgress) in _recordsChannel.Reader.ReadAllAsync(_cancellationToken))
             {
                 Interlocked.Decrement(ref _waitingHandlersCount);
 
@@ -117,16 +118,19 @@ public class OutboxDispatcherHostedService : IHostedService
                     if (handler == null)
                         throw new OutboxHandlerNotFoundException($"Handler for action {outboxRecord.Action} not found");
 
+                    if (stuckInProgress)
+                    {
+                        await HandleActionExecutionException(scopeLogger, new InProgressTimeoutException(), outboxRecord, handler, outboxDataAccess);
+                        continue;
+                    }
+
                     var hooks = scope.ServiceProvider.GetServices<IOutboxHook>();
 
                     foreach (var hook in hooks)
-                    {
                         await hook.Execute(outboxRecord);
-                    }
 
                     await handler.Handle(outboxRecord);
-
-                    await outboxDataAccess.CompleteRecord(outboxRecord);
+                    await outboxDataAccess.CommitExecutionResult(outboxRecord, ExecutionResult.Success);
                 }
                 catch (Exception ex)
                 {
@@ -147,33 +151,32 @@ public class OutboxDispatcherHostedService : IHostedService
     {
         scopeLogger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
 
-        var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
-        TimeSpan? shouldRetry;
+        var executionResult = GetRetryStrategyResolution(scopeLogger, ex, outboxRecord, handler);
 
         try
         {
-            shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
-        }
-        catch (Exception retryEx)
-        {
-            scopeLogger.LogError(retryEx, "Error occured handling retry strategy for outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
-            shouldRetry = null;
-        }
-
-        try
-        {
-            if (shouldRetry.HasValue)
-            {
-                await outboxDataAccess.SendRecordToRetry(outboxRecord, shouldRetry.Value);
-            }
-            else
-            {
-                await outboxDataAccess.FailRecord(outboxRecord);
-            }
+            await outboxDataAccess.CommitExecutionResult(outboxRecord, executionResult);
         }
         catch (Exception resolveErrorEx)
         {
             scopeLogger.LogError(resolveErrorEx, "Error occured while resolving error for outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
         }
+    }
+
+    private static ExecutionResult GetRetryStrategyResolution(ILogger<OutboxDispatcherHostedService> scopeLogger, Exception ex, OutboxEntity? outboxRecord, IOutboxActionHandler? handler)
+    {
+        var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
+        var executionResult = ExecutionResult.Fail;
+
+        try
+        {
+            executionResult = retryStrategy.HandleError(ex, outboxRecord);
+        }
+        catch (Exception retryEx)
+        {
+            scopeLogger.LogError(retryEx, "Error occured handling retry strategy for outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
+        }
+
+        return executionResult;
     }
 }

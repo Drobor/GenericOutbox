@@ -1,11 +1,10 @@
 using GenericOutbox.DataAccess.Entities;
+using GenericOutbox.DataAccess.Models;
 
 namespace GenericOutbox.DataAccess.Services;
 
 public interface IOutboxDataAccess
 {
-    Task FailRecord(OutboxEntity outboxEntity);
-    Task SendRecordToRetry(OutboxEntity outboxEntity, TimeSpan retryInterval);
-    Task<OutboxEntity[]> GetOutboxRecords(int maxCount);
-    Task CompleteRecord(OutboxEntity outboxEntity);
+    Task<OutboxEntityDispatchModel[]> GetOutboxRecords(int maxCount);
+    Task CommitExecutionResult(OutboxEntity outboxEntity, ExecutionResult executionResult);
 }
