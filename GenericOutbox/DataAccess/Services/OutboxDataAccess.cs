@@ -1,4 +1,5 @@
 using GenericOutbox.DataAccess.Entities;
+using GenericOutbox.DataAccess.Models;
 using GenericOutbox.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,7 +41,7 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
                     .SetProperty(r => r.HandlerLock, r => null));
     }
 
-    public async Task<OutboxEntity[]> GetOutboxRecords(int maxCount)
+    public async Task<OutboxEntityDispatchModel[]> GetOutboxRecords(int maxCount)
     {
         Guid lockId = Guid.NewGuid();
 
@@ -53,17 +54,23 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
             _ => await ReserveStuckInProgressRecords(lockId, maxCount)
         };
 
+        var stuckInProgress = _rollingOutboxQueryType == 4;
+
         if (recordsToUpdateCount < maxCount)
             _rollingOutboxQueryType = (_rollingOutboxQueryType + 1) % 5;
 
         if (recordsToUpdateCount == 0)
-            return Array.Empty<OutboxEntity>();
+            return Array.Empty<OutboxEntityDispatchModel>();
 
-        return await _dbContext
+        var result = await _dbContext
             .Set<OutboxEntity>()
             .AsNoTracking()
             .Where(x => x.HandlerLock == lockId)
             .ToArrayAsync();
+
+        return result
+            .Select(x => new OutboxEntityDispatchModel(x, stuckInProgress))
+            .ToArray();
     }
 
     private async Task<int> ReserveLockedOutboxRecords(Guid handlerLockId, int maxCount)
@@ -174,7 +181,8 @@ public class OutboxDataAccess<TDbContext> : IOutboxDataAccess where TDbContext :
 
         var stuckCutoff = DateTime.UtcNow - _outboxOptions.InProgressRecordTimeout;
 
-        return await _dbContext.Set<OutboxEntity>()
+        return await _dbContext
+            .Set<OutboxEntity>()
             .Where(
                 r =>
                     r.Status == OutboxRecordStatus.InProgress
