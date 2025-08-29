@@ -130,19 +130,7 @@ public class OutboxDispatcherHostedService : IHostedService
                 }
                 catch (Exception ex)
                 {
-                    scopeLogger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
-
-                    var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
-                    var shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
-
-                    if (shouldRetry.HasValue)
-                    {
-                        await outboxDataAccess.SendRecordToRetry(outboxRecord, shouldRetry.Value);
-                    }
-                    else
-                    {
-                        await outboxDataAccess.FailRecord(outboxRecord);
-                    }
+                    await HandleActionExecutionException(scopeLogger, ex, outboxRecord, handler, outboxDataAccess);
                 }
                 finally
                 {
@@ -152,6 +140,40 @@ public class OutboxDispatcherHostedService : IHostedService
         }
         catch (OperationCanceledException)
         {
+        }
+    }
+
+    private static async Task HandleActionExecutionException(ILogger<OutboxDispatcherHostedService> scopeLogger, Exception ex, OutboxEntity outboxRecord, IOutboxActionHandler? handler, IOutboxDataAccess outboxDataAccess)
+    {
+        scopeLogger.LogError(ex, "Error occured while executing outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
+
+        var retryStrategy = handler?.RetryStrategy ?? s_defaultRetryStrategy;
+        TimeSpan? shouldRetry;
+
+        try
+        {
+            shouldRetry = retryStrategy.ShouldRetry(ex, outboxRecord);
+        }
+        catch (Exception retryEx)
+        {
+            scopeLogger.LogError(retryEx, "Error occured handling retry strategy for outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
+            shouldRetry = null;
+        }
+
+        try
+        {
+            if (shouldRetry.HasValue)
+            {
+                await outboxDataAccess.SendRecordToRetry(outboxRecord, shouldRetry.Value);
+            }
+            else
+            {
+                await outboxDataAccess.FailRecord(outboxRecord);
+            }
+        }
+        catch (Exception resolveErrorEx)
+        {
+            scopeLogger.LogError(resolveErrorEx, "Error occured while resolving error for outbox action {OutboxAction}", outboxRecord?.Action ?? "null");
         }
     }
 }
