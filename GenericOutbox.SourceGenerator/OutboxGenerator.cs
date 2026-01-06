@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace GenericOutbox.SourceGenerator
 {
     [Generator]
-    public class OutboxGenerator : ISourceGenerator
+    public class OutboxGenerator : IIncrementalGenerator
     {
         private static readonly SymbolDisplayFormat s_fullyQualifiedTypeDisplayFormat = new SymbolDisplayFormat(
             typeQualificationStyle: SymbolDisplayTypeQualificationStyle.NameAndContainingTypesAndNamespaces,
@@ -17,39 +18,68 @@ namespace GenericOutbox.SourceGenerator
             parameterOptions: SymbolDisplayParameterOptions.IncludeType,
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.EscapeKeywordIdentifiers);
 
-        public void Initialize(GeneratorInitializationContext context)
+        public void Initialize(IncrementalGeneratorInitializationContext context)
         {
-            context.RegisterForSyntaxNotifications(() => new OutboxInterfacesSyntaxReceiver());
+            var interfaceDeclarations = context.SyntaxProvider
+                .CreateSyntaxProvider(
+                    predicate: static (s, _) => IsOutboxInterface(s),
+                    transform: static (ctx, _) => GetSemanticTargetForGeneration(ctx))
+                .Where(static m => m is not null);
+
+            var compilationAndInterfaces = context.CompilationProvider.Combine(interfaceDeclarations.Collect());
+
+            context.RegisterSourceOutput(compilationAndInterfaces, 
+                static (spc, source) => Execute(source.Left, source.Right, spc));
         }
 
-        public void Execute(GeneratorExecutionContext context)
+        private static bool IsOutboxInterface(SyntaxNode node)
         {
-            var synRes = (OutboxInterfacesSyntaxReceiver)context.SyntaxReceiver;
+            return node is InterfaceDeclarationSyntax ids 
+                && ids.AttributeLists.Count > 0 
+                && ids.AttributeLists.SelectMany(x => x.Attributes).Any(x => x.Name.ToString().Contains("OutboxInterface"));
+        }
 
-            foreach (var connectionType in synRes.OutboxInterfaces)
+        private static InterfaceDeclarationSyntax GetSemanticTargetForGeneration(GeneratorSyntaxContext context)
+        {
+            var interfaceDeclarationSyntax = (InterfaceDeclarationSyntax)context.Node;
+            return interfaceDeclarationSyntax;
+        }
+
+        private static void Execute(Compilation compilation, ImmutableArray<InterfaceDeclarationSyntax> interfaces, SourceProductionContext context)
+        {
+            if (interfaces.IsDefaultOrEmpty)
+                return;
+
+            foreach (var interfaceSyntax in interfaces.Distinct())
             {
+                context.CancellationToken.ThrowIfCancellationRequested();
+
                 try
                 {
-                    var fullName = $"{((BaseNamespaceDeclarationSyntax)connectionType.Parent).Name}.{connectionType.Identifier.Text}";
-                    var outboxInterface = context.Compilation.GetTypeByMetadataName(fullName);
+                    var semanticModel = compilation.GetSemanticModel(interfaceSyntax.SyntaxTree);
+                    var outboxInterface = semanticModel.GetDeclaredSymbol(interfaceSyntax) as INamedTypeSymbol;
+
+                    if (outboxInterface == null)
+                        continue;
 
                     try
                     {
-                        context.AddSource($"{outboxInterface.Name}.g.cs", GenerateInterfaceWrapper(outboxInterface));
+                        var source = GenerateInterfaceWrapper(outboxInterface);
+                        context.AddSource($"{outboxInterface.Name}.g.cs", source);
                     }
                     catch (Exception ex)
                     {
-                        context.AddSource($"{outboxInterface.Name}{DateTime.Now:HH-mm-ss}.Error.g.cs", "//" + DumpException(ex).Replace("\n", "\n//"));
+                        context.AddSource($"{outboxInterface.Name}_Error.g.cs", "//" + DumpException(ex).Replace("\n", "\n//"));
                     }
                 }
                 catch (Exception ex)
                 {
-                    context.AddSource($"GenericOutbox.{DateTime.Now:HH-mm-ss}.Error.g.cs", $"{ex.Message}\n{ex.StackTrace}");
+                    context.AddSource($"GenericOutbox_Error.g.cs", $"//{ex.Message}\n//{ex.StackTrace}");
                 }
             }
         }
 
-        private string GenerateInterfaceWrapper(INamedTypeSymbol outboxInterface)
+        private static string GenerateInterfaceWrapper(INamedTypeSymbol outboxInterface)
         {
             if (outboxInterface.Interfaces.Length != 1)
             {
@@ -177,7 +207,7 @@ namespace GenericOutbox.SourceGenerator
             return cb.ToString();
         }
 
-        private void GenerateArgumentsWrapperModel(CodeBuilder cb, IMethodSymbol method)
+        private static void GenerateArgumentsWrapperModel(CodeBuilder cb, IMethodSymbol method)
         {
             cb.WriteCode(
                 $"public class {GetMethodArgumentsWrapperModelName(method)}",
@@ -189,7 +219,7 @@ namespace GenericOutbox.SourceGenerator
             cb.WriteCode("}");
         }
 
-        private void GenerateHandlerClass(CodeBuilder cb, ITypeSymbol type, IMethodSymbol method)
+        private static void GenerateHandlerClass(CodeBuilder cb, ITypeSymbol type, IMethodSymbol method)
         {
             var originalInterfaceType = type.ToDisplayString(s_fullyQualifiedTypeDisplayFormat);
             var className = GetMethodHandlerClassName(method);
@@ -243,22 +273,22 @@ namespace GenericOutbox.SourceGenerator
             }
         }
 
-        private string GetMethodArgumentsWrapperModelName(IMethodSymbol method)
+        private static string GetMethodArgumentsWrapperModelName(IMethodSymbol method)
         {
             return $"{method.Name}ArgumentsWrapperModel";
         }
 
-        private string GetMethodHandlerClassName(IMethodSymbol method)
+        private static string GetMethodHandlerClassName(IMethodSymbol method)
         {
             return $"{method.Name}Handler";
         }
 
-        private string GetOutboxActionName(ITypeSymbol type, IMethodSymbol method)
+        private static string GetOutboxActionName(ITypeSymbol type, IMethodSymbol method)
         {
             return $"{type.Name}.{method.Name}";
         }
 
-        private string DumpException(Exception ex)
+        private static string DumpException(Exception ex)
         {
             var sb = new StringBuilder();
 
@@ -273,7 +303,7 @@ namespace GenericOutbox.SourceGenerator
             return sb.ToString();
         }
 
-        private bool IsTask(ITypeSymbol type)
+        private static bool IsTask(ITypeSymbol type)
         {
             return type.ToDisplayString(s_fullyQualifiedTypeDisplayFormat).StartsWith("System.Threading.Tasks.Task");
         }
