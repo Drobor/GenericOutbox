@@ -6,7 +6,7 @@ namespace GenericOutbox.DataAccess.Entities;
 public class OutboxEntity
 {
     public int Id { get; set; }
-    public Guid? Lock { get; set; }
+    public Guid Lock { get; set; }
     public Guid? HandlerLock { get; set; }
     public Guid ScopeId { get; set; }
     public string Action { get; set; }

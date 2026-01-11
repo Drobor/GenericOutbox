@@ -11,7 +11,7 @@ using PersonService.DataAccess;
 namespace PersonService.Migrations
 {
     [DbContext(typeof(PersonServiceDbContext))]
-    [Migration("20260111215716_RemoveParent")]
+    [Migration("20260111221643_RemoveParent")]
     partial class RemoveParent
     {
         /// <inheritdoc />
@@ -63,7 +63,7 @@ namespace PersonService.Migrations
                     b.Property<DateTime>("LastUpdatedUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("Lock")
+                    b.Property<Guid>("Lock")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Metadata")

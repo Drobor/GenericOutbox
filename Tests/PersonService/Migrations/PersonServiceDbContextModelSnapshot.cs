@@ -60,7 +60,7 @@ namespace PersonService.Migrations
                     b.Property<DateTime>("LastUpdatedUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("Lock")
+                    b.Property<Guid>("Lock")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Metadata")

@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntegrationTests.Migrations
 {
     [DbContext(typeof(IntegrationTestsDbContext))]
-    [Migration("20260111215916_RemoveParent")]
+    [Migration("20260111221535_RemoveParent")]
     partial class RemoveParent
     {
         /// <inheritdoc />
@@ -63,7 +63,7 @@ namespace IntegrationTests.Migrations
                     b.Property<DateTime>("LastUpdatedUtc")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("Lock")
+                    b.Property<Guid>("Lock")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Metadata")
