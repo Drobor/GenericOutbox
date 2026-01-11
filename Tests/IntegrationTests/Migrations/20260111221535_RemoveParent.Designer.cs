@@ -3,6 +3,7 @@ using System;
 using IntegrationTests;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IntegrationTests.Migrations
 {
     [DbContext(typeof(IntegrationTestsDbContext))]
-    partial class IntegrationTestsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260111221535_RemoveParent")]
+    partial class RemoveParent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
