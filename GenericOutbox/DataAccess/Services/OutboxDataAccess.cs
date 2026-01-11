@@ -77,8 +77,7 @@ public class OutboxDataAccess<TDbContext>(TDbContext dbContext, OutboxOptions ou
                     && dbContext
                         .Set<OutboxEntity>()
                         .Where(
-                            x => x.Lock != null
-                                 && !dbContext
+                            x => !dbContext
                                      .Set<OutboxEntity>()
                                      .Any(y => y.Lock == x.Lock && !s_unlockedStatuses.Contains(y.Status))
                                  && x.Status == OutboxRecordStatus.ReadyToExecute
@@ -110,8 +109,7 @@ public class OutboxDataAccess<TDbContext>(TDbContext dbContext, OutboxOptions ou
                     && dbContext
                         .Set<OutboxEntity>()
                         .Where(
-                            x => x.Lock != null
-                                 && !dbContext.Set<OutboxEntity>().Any(y => y.Lock == x.Lock && !s_unlockedStatuses.Contains(y.Status))
+                            x => !dbContext.Set<OutboxEntity>().Any(y => y.Lock == x.Lock && !s_unlockedStatuses.Contains(y.Status))
                                  && x.RetryTimeoutUtc < now
                                  && x.Version == outboxOptions.Version
                                  && x.HandlerLock == null)
