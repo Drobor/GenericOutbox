@@ -15,7 +15,7 @@ public class OutboxDataAccess<TDbContext>(TDbContext dbContext, OutboxOptions ou
         OutboxRecordStatus.Completed
     };
 
-    private int _rollingOutboxQueryType = 0; //0 = non-locked, 1 = locked
+    private int _rollingOutboxQueryType = 0;
 
     public async Task CommitExecutionResult(OutboxEntity outboxEntity, ExecutionResult executionResult)
     {
