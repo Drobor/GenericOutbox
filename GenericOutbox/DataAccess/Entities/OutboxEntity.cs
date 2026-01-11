@@ -8,7 +8,6 @@ public class OutboxEntity
     public int Id { get; set; }
     public Guid? Lock { get; set; }
     public Guid? HandlerLock { get; set; }
-    public int? ParentId { get; set; }
     public Guid ScopeId { get; set; }
     public string Action { get; set; }
     public byte[] Payload { get; set; }
@@ -20,8 +19,6 @@ public class OutboxEntity
     public string Version { get; set; }
 
     public string? Metadata { get; set; }
-
-    public virtual OutboxEntity Parent { get; set; }
 
     public string PayloadString => Encoding.UTF8.GetString(Payload);
 }

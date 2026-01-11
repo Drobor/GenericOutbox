@@ -9,12 +9,6 @@ public class OutboxEntityConfiguration : IEntityTypeConfiguration<OutboxEntity>
     public void Configure(EntityTypeBuilder<OutboxEntity> builder)
     {
         builder.HasKey(x => x.Id);
-        //builder.HasIndex(x => x.ParentId).IsUnique(); todo: nullability problem
-
-        builder.HasOne(x => x.Parent)
-            .WithOne()
-            .HasForeignKey<OutboxEntity>(x => x.ParentId)
-            .IsRequired(false);
 
         builder.HasIndex(x => x.Version);
         builder.HasIndex(x => x.HandlerLock);

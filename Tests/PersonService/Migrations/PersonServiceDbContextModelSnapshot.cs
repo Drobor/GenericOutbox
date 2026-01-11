@@ -15,7 +15,7 @@ namespace PersonService.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "7.0.5");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
             modelBuilder.Entity("GenericOutbox.DataAccess.Entities.OutboxDataEntity", b =>
                 {
@@ -66,9 +66,6 @@ namespace PersonService.Migrations
                     b.Property<string>("Metadata")
                         .HasColumnType("TEXT");
 
-                    b.Property<int?>("ParentId")
-                        .HasColumnType("INTEGER");
-
                     b.Property<byte[]>("Payload")
                         .IsRequired()
                         .HasColumnType("BLOB");
@@ -95,9 +92,6 @@ namespace PersonService.Migrations
 
                     b.HasIndex("Lock");
 
-                    b.HasIndex("ParentId")
-                        .IsUnique();
-
                     b.HasIndex("ScopeId");
 
                     b.HasIndex("Version");
@@ -114,15 +108,6 @@ namespace PersonService.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Persons");
-                });
-
-            modelBuilder.Entity("GenericOutbox.DataAccess.Entities.OutboxEntity", b =>
-                {
-                    b.HasOne("GenericOutbox.DataAccess.Entities.OutboxEntity", "Parent")
-                        .WithOne()
-                        .HasForeignKey("GenericOutbox.DataAccess.Entities.OutboxEntity", "ParentId");
-
-                    b.Navigation("Parent");
                 });
 #pragma warning restore 612, 618
         }
